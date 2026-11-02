@@ -1,0 +1,30 @@
+/* 題庫管理頁面專用樣式 */
+.bank-controls {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.question-list {
+    max-height: 350px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    border: 1px solid #e2e8f0;
+    padding: 10px;
+    border-radius: 8px;
+    background: #fafafa;
+}
+
+.question-item {
+    background: white;
+    padding: 12px 16px;
+    border-radius: 8px;
+    border: 1px solid #e9ecef;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+}

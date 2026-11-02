@@ -1,0 +1,466 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>國語文大冒險</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <!-- 1. 主選單頁面 -->
+    <div id="main-menu" class="page active">
+        <div class="menu-card">
+            <h1>🎲 國語文大冒險</h1>
+            <p class="subtitle">知識 × 策略 × 冒險</p>
+            <div class="button-group">
+                <button class="btn btn-primary" onclick="showPage('player-setup')">開始遊戲</button>
+                <button class="btn" onclick="openBankManagement()">題庫管理</button>
+                <button class="btn" onclick="showPage('game-instructions')">遊戲說明</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 2. 玩家設定頁面 -->
+    <div id="player-setup" class="page">
+        <div class="setup-card">
+            <h2>👥 請輸入玩家資料</h2>
+            <p class="desc">預設 4 位玩家，可增加至最多 8 位。</p>
+
+            <div id="player-inputs-container" class="input-list">
+                <div class="player-input-group">
+                    <span class="color-dot" style="background-color: #e74c3c;"></span>
+                    <input type="text" class="player-name-input" placeholder="玩家 1 姓名" value="小明">
+                </div>
+                <div class="player-input-group">
+                    <span class="color-dot" style="background-color: #3498db;"></span>
+                    <input type="text" class="player-name-input" placeholder="玩家 2 姓名" value="小華">
+                </div>
+                <div class="player-input-group">
+                    <span class="color-dot" style="background-color: #2ecc71;"></span>
+                    <input type="text" class="player-name-input" placeholder="玩家 3 姓名" value="小美">
+                </div>
+                <div class="player-input-group">
+                    <span class="color-dot" style="background-color: #9b59b6;"></span>
+                    <input type="text" class="player-name-input" placeholder="玩家 4 姓名" value="小安">
+                </div>
+            </div>
+
+            <div class="setup-actions">
+                <button class="btn btn-secondary" onclick="addPlayerInput()">+ 新增玩家</button>
+                <button class="btn btn-primary" onclick="startGame()">確認名稱並進入棋盤</button>
+                <button class="btn" onclick="showPage('main-menu')">返回主選單</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 3. 遊戲主畫面 -->
+    <div id="game-board-page" class="page">
+        <header class="game-header">
+            <span class="round-indicator">第 <strong id="current-round">1</strong> / 15 輪</span>
+            <button class="btn btn-small" onclick="restartGame()">重新開始</button>
+        </header>
+
+        <main class="game-container">
+            <section class="board-area">
+                <div class="circular-board" id="circular-board">
+                    <div class="board-center">
+                        <div id="active-player-display">輪到 <strong>小明</strong></div>
+                        <div class="dice-box" id="dice-box">🎲</div>
+                        <button class="btn btn-primary" id="roll-dice-btn" onclick="handleRollDice()">擲骰子</button>
+                    </div>
+                </div>
+            </section>
+
+            <aside class="player-info-sidebar">
+                <h3>玩家資訊</h3>
+                <div id="player-cards-list" class="player-cards-list"></div>
+            </aside>
+        </main>
+    </div>
+
+    <!-- 4. 題庫管理頁面 -->
+    <div id="bank-management-page" class="page">
+        <div class="setup-card" style="max-width: 750px; width: 95%; text-align: left;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                <h2>📚 國語文題庫管理</h2>
+                <button class="btn btn-small" onclick="showPage('main-menu')">返回主選單</button>
+            </div>
+
+            <div class="bank-controls">
+                <button class="btn btn-secondary" onclick="openAddQuestionModal()">+ 新增題目</button>
+                <div>
+                    <button class="btn btn-small" onclick="exportQuestionBank()">匯出題庫(JSON)</button>
+                    <label class="btn btn-small" style="cursor: pointer; display: inline-block;">
+                        匯入題庫 <input type="file" id="import-file" accept=".json" style="display: none;" onchange="importQuestionBank(event)">
+                    </label>
+                </div>
+            </div>
+
+            <div style="margin: 15px 0;">
+                <label>篩選分類：</label>
+                <select id="category-filter" onchange="renderQuestionList()" style="padding: 6px 12px; border-radius: 6px;">
+                    <option value="全部">全部分類</option>
+                    <option value="字音字形">字音字形</option>
+                    <option value="成語與熟語">成語與熟語</option>
+                    <option value="詞語解釋">詞語解釋</option>
+                    <option value="文言文">文言文</option>
+                    <option value="修辭與語法">修辭與語法</option>
+                    <option value="國學常識">國學常識</option>
+                    <option value="閱讀理解">閱讀理解</option>
+                    <option value="課文內容">課文內容</option>
+                    <option value="其他">其他</option>
+                </select>
+            </div>
+
+            <div id="question-list-container" class="question-list"></div>
+        </div>
+    </div>
+
+    <!-- 5. 遊戲說明頁面 -->
+    <div id="game-instructions" class="page">
+        <div class="info-card">
+            <h2>📜 遊戲說明</h2>
+            <ul style="text-align: left; margin: 15px 0; line-height: 1.6;">
+                <li><strong>遊戲目標：</strong>進行 15 輪後，結算點數最高者獲勝。</li>
+                <li><strong>起始資金：</strong>每位玩家初始獲得 100 點（最低維持 0 點）。</li>
+                <li><strong>答題獎懲：</strong>答對可選 +10 點或攻擊對手；答錯/超時扣 10 點。</li>
+                <li><strong>攻防機制：</strong>指定對手答題，防守失敗扣 15 點，成功則攻擊者扣 15 點。</li>
+            </ul>
+            <button class="btn btn-primary" onclick="showPage('main-menu')">回到主選單</button>
+        </div>
+    </div>
+
+    <!-- 6. 結算頁面 -->
+    <div id="game-over-page" class="page">
+        <div class="menu-card" style="max-width: 600px;">
+            <h1>🏆 遊戲結束！</h1>
+            <h2 id="winner-display" style="color: #e67e22; margin: 15px 0;"></h2>
+            <div id="leaderboard-container"></div>
+            <button class="btn btn-primary" onclick="showPage('main-menu')" style="margin-top: 20px;">返回主選單</button>
+        </div>
+    </div>
+
+    <!-- Modal：新增題目視窗 -->
+    <div id="add-question-modal" class="modal">
+        <div class="modal-content" style="max-width: 500px; text-align: left;">
+            <h3>➕ 新增題目</h3>
+            <form id="add-question-form" onsubmit="saveNewQuestion(event)">
+                <div class="form-group">
+                    <label>題目分類：</label>
+                    <select id="new-q-cat" required style="width: 100%; padding: 8px; margin-top: 5px;">
+                        <option value="字音字形">字音字形</option>
+                        <option value="成語與熟語" selected>成語與熟語</option>
+                        <option value="詞語解釋">詞語解釋</option>
+                        <option value="文言文">文言文</option>
+                        <option value="修辭與語法">修辭與語法</option>
+                        <option value="國學常識">國學常識</option>
+                        <option value="閱讀理解">閱讀理解</option>
+                        <option value="課文內容">課文內容</option>
+                        <option value="其他">其他</option>
+                    </select>
+                </div>
+                <div class="form-group" style="margin-top: 10px;">
+                    <label>題目內容：</label>
+                    <textarea id="new-q-text" required rows="2" style="width: 100%; padding: 8px; margin-top: 5px;"></textarea>
+                </div>
+                <div class="form-group" style="margin-top: 10px;">
+                    <label>選項 A：</label><input type="text" id="new-q-opt0" required style="width: 100%; padding: 6px;">
+                    <label>選項 B：</label><input type="text" id="new-q-opt1" required style="width: 100%; padding: 6px;">
+                    <label>選項 C：</label><input type="text" id="new-q-opt2" required style="width: 100%; padding: 6px;">
+                    <label>選項 D：</label><input type="text" id="new-q-opt3" required style="width: 100%; padding: 6px;">
+                </div>
+                <div class="form-group" style="margin-top: 10px;">
+                    <label>正確答案：</label>
+                    <select id="new-q-ans" style="padding: 6px;">
+                        <option value="0">選項 A</option>
+                        <option value="1">選項 B</option>
+                        <option value="2">選項 C</option>
+                        <option value="3">選項 D</option>
+                    </select>
+                </div>
+                <div style="display: flex; gap: 10px; margin-top: 20px;">
+                    <button type="submit" class="btn btn-primary" style="flex: 1;">保存</button>
+                    <button type="button" class="btn" onclick="closeModal('add-question-modal')">取消</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- 彈出視窗：訊息提示 -->
+    <div id="msg-modal" class="modal">
+        <div class="modal-content">
+            <h3 id="msg-title">提示</h3>
+            <p id="msg-body" style="margin: 15px 0; font-size: 1.1rem;"></p>
+            <button class="btn btn-primary" onclick="closeMsgModal()">繼續</button>
+        </div>
+    </div>
+
+    <!-- 彈出視窗：答題視窗 -->
+    <div id="quiz-modal" class="modal">
+        <div class="modal-content quiz-content">
+            <div class="quiz-header">
+                <span id="quiz-mode-tag" class="tag">一般答題</span>
+                <span class="timer">剩餘時間：<strong id="timer-sec">30</strong>秒</span>
+            </div>
+            <h3 id="quiz-question" style="margin: 15px 0; text-align: left;">題目內容載入中...</h3>
+            <div id="quiz-options" class="options-group"></div>
+            <button id="quiz-submit-btn" class="btn btn-primary" style="margin-top: 15px; width: 100%;" onclick="submitAnswer()" disabled>確認答案</button>
+        </div>
+    </div>
+
+    <!-- 彈出視窗：答對後選擇（領獎或攻擊） -->
+    <div id="reward-choice-modal" class="modal">
+        <div class="modal-content">
+            <h3>🎉 答對了！請選擇獎勵：</h3>
+            <div class="button-group" style="margin-top: 20px;">
+                <button class="btn btn-secondary" onclick="chooseAddPoints()">獲得 +10 點</button>
+                <button class="btn btn-primary" id="attack-choice-btn" onclick="openAttackTargetModal()">發動攻擊 (指定對手答題)</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 彈出視窗：選擇攻擊目標 -->
+    <div id="attack-target-modal" class="modal">
+        <div class="modal-content">
+            <h3>⚔️ 請選擇攻擊目標：</h3>
+            <div id="target-buttons-list" class="button-group" style="margin-top: 20px;"></div>
+            <button class="btn" style="margin-top: 15px;" onclick="closeModal('attack-target-modal'); openModal('reward-choice-modal');">返回上一步</button>
+        </div>
+    </div>
+
+    <script>
+        // ================= 全域變數與初始化預設題庫 =================
+        const playerColors = ['#e74c3c', '#3498db', '#2ecc71', '#9b59b6', '#f1c40f', '#e67e22', '#1abc9c', '#e84393'];
+        
+        let players = [];
+        let currentRound = 1;
+        let activePlayerIndex = 0;
+        let isDiceRolling = false;
+        let msgCallback = null;
+
+        let playersAttackedThisRound = [];
+        let playersBeenAttackedThisRound = [];
+
+        let timerInterval = null;
+        let timeLeft = 30;
+        let selectedOptionIndex = null;
+        let currentQuestion = null;
+        let quizMode = 'normal';
+        let currentAttacker = null;
+        let currentDefender = null;
+
+        // 預設題庫資料結構 (支援分類)
+        const defaultQuestionBank = [
+            { category: "成語與熟語", q: "下列哪一個成語的意思是形容「做事有條理、不慌亂」？", options: ["A. 手忙腳亂", "B. 有條不紊", "C. 雞飛狗跳", "D. 七手八腳"], ans: 1 },
+            { category: "成語與熟語", q: "「一曝十寒」是用來比喻什麼？", options: ["A. 做事缺乏恆心", "B. 氣候變化無常", "C. 學習認真刻苦", "D. 身體非常虛弱"], ans: 0 },
+            { category: "字音字形", q: "下列哪一組「」中的字注音相同？", options: ["A. 「參」差 / 「參」加", "B. 塑「膠」 / 樂「腳」", "C. 吹「拂」 / 「佛」像", "D. 抑「揚」頓挫 / 「揚」長而去"], ans: 3 },
+            { category: "成語與熟語", q: "「亡羊補牢」的下一句通常接什麼？", options: ["A. 為時已晚", "B. 未為遲也", "C. 悔之晚矣", "D. 徒勞無功"], ans: 1 },
+            { category: "國學常識", q: "下列何者非古典成語？", options: ["A. 畫蛇添足", "B. 守株待兔", "C. 人山人海", "D. 揠苗助長"], ans: 2 }
+        ];
+
+        let questionBank = [];
+
+        // 載入題庫 (優先自 localStorage 讀取)
+        function loadQuestionBank() {
+            const saved = localStorage.getItem('chinese_game_questions');
+            if (saved) {
+                try { questionBank = JSON.parse(saved); } catch(e) { questionBank = [...defaultQuestionBank]; }
+            } else {
+                questionBank = [...defaultQuestionBank];
+                saveQuestionBank();
+            }
+        }
+
+        function saveQuestionBank() {
+            localStorage.setItem('chinese_game_questions', JSON.stringify(questionBank));
+        }
+
+        const tilesData = [
+            { name: '起點', type: 'start', icon: '🚩' },
+            { name: '答題', type: 'question', icon: '❓' },
+            { name: '獎勵', type: 'reward', icon: '💰' },
+            { name: '答題', type: 'question', icon: '❓' },
+            { name: '機會', type: 'chance', icon: '🎁' },
+            { name: '答題', type: 'question', icon: '❓' },
+            { name: '懲罰', type: 'penalty', icon: '⚠️' },
+            { name: '答題', type: 'question', icon: '❓' },
+            { name: '傳送', type: 'teleport', icon: '🌀' },
+            { name: '答題', type: 'question', icon: '❓' },
+            { name: '機會', type: 'chance', icon: '🎁' },
+            { name: '答題', type: 'question', icon: '❓' },
+            { name: '獎勵', type: 'reward', icon: '💰' },
+            { name: '答題', type: 'question', icon: '❓' },
+            { name: '懲罰', type: 'penalty', icon: '⚠️' },
+            { name: '答題', type: 'question', icon: '❓' },
+            { name: '機會', type: 'chance', icon: '🎁' },
+            { name: '答題', type: 'question', icon: '❓' },
+            { name: '傳送', type: 'teleport', icon: '🌀' },
+            { name: '答題', type: 'question', icon: '❓' },
+            { name: '機會', type: 'chance', icon: '🎁' },
+            { name: '答題', type: 'question', icon: '❓' },
+            { name: '懲罰', type: 'penalty', icon: '⚠️' },
+            { name: '答題', type: 'question', icon: '❓' },
+        ];
+
+        // ================= 頁面與 UI 控制 =================
+        function showPage(pageId) {
+            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+            document.getElementById(pageId).classList.add('active');
+        }
+
+        function openModal(id) { document.getElementById(id).classList.add('active'); }
+        function closeModal(id) { document.getElementById(id).classList.remove('active'); }
+
+        function showMsg(title, text, callback = null) {
+            document.getElementById('msg-title').innerText = title;
+            document.getElementById('msg-body').innerText = text;
+            msgCallback = callback;
+            openModal('msg-modal');
+        }
+
+        function closeMsgModal() {
+            closeModal('msg-modal');
+            if (msgCallback) {
+                const cb = msgCallback;
+                msgCallback = null;
+                cb();
+            }
+        }
+
+        // ================= 題庫管理功能 =================
+        function openBankManagement() {
+            const pwd = prompt('請輸入題庫管理密碼：');
+            if (pwd === '1234') {
+                renderQuestionList();
+                showPage('bank-management-page');
+            } else if (pwd !== null) {
+                alert('密碼錯誤！預設密碼為 1234');
+            }
+        }
+
+        function renderQuestionList() {
+            const filterCat = document.getElementById('category-filter').value;
+            const container = document.getElementById('question-list-container');
+            container.innerHTML = '';
+
+            const filtered = filterCat === '全部' ? questionBank : questionBank.filter(q => q.category === filterCat);
+
+            if (filtered.length === 0) {
+                container.innerHTML = `<div style="text-align: center; color: #7f8c8d; padding: 20px;">目前尚無符合條件的題目。</div>`;
+                return;
+            }
+
+            filtered.forEach((q, idx) => {
+                const realIndex = questionBank.indexOf(q);
+                const item = document.createElement('div');
+                item.className = 'question-item';
+                item.innerHTML = `
+                    <div style="flex: 1;">
+                        <span class="tag">${q.category || '未分類'}</span>
+                        <strong style="margin-left: 8px;">${q.q}</strong>
+                        <div style="font-size: 0.85rem; color: #555; margin-top: 5px;">
+                            ${q.options.map((opt, i) => i === q.ans ? `<strong style="color: #27ae60;">[${opt}]</strong>` : opt).join(' | ')}
+                        </div>
+                    </div>
+                    <button class="btn btn-small" style="background-color: #e74c3c; color: white;" onclick="deleteQuestion(${realIndex})">刪除</button>
+                `;
+                container.appendChild(item);
+            });
+        }
+
+        function openAddQuestionModal() {
+            document.getElementById('add-question-form').reset();
+            openModal('add-question-modal');
+        }
+
+        function saveNewQuestion(e) {
+            e.preventDefault();
+            const cat = document.getElementById('new-q-cat').value;
+            const text = document.getElementById('new-q-text').value.trim();
+            const opt0 = document.getElementById('new-q-opt0').value.trim();
+            const opt1 = document.getElementById('new-q-opt1').value.trim();
+            const opt2 = document.getElementById('new-q-opt2').value.trim();
+            const opt3 = document.getElementById('new-q-opt3').value.trim();
+            const ans = parseInt(document.getElementById('new-q-ans').value);
+
+            questionBank.push({
+                category: cat,
+                q: text,
+                options: [`A. ${opt0}`, `B. ${opt1}`, `C. ${opt2}`, `D. ${opt3}`],
+                ans: ans
+            });
+
+            saveQuestionBank();
+            closeModal('add-question-modal');
+            renderQuestionList();
+        }
+
+        function deleteQuestion(index) {
+            if (confirm("確定要刪除這道題目嗎？")) {
+                questionBank.splice(index, 1);
+                saveQuestionBank();
+                renderQuestionList();
+            }
+        }
+
+        function exportQuestionBank() {
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(questionBank, null, 2));
+            const downloadAnchor = document.createElement('a');
+            downloadAnchor.setAttribute("href", dataStr);
+            downloadAnchor.setAttribute("download", "國語文大冒險題庫.json");
+            document.body.appendChild(downloadAnchor);
+            downloadAnchor.click();
+            downloadAnchor.remove();
+        }
+
+        function importQuestionBank(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const imported = JSON.parse(e.target.result);
+                    if (Array.isArray(imported)) {
+                        questionBank = imported;
+                        saveQuestionBank();
+                        renderQuestionList();
+                        alert("題庫匯入成功！");
+                    } else { alert("格式不正確！"); }
+                } catch(err) { alert("讀取檔案失敗！"); }
+            };
+            reader.readAsText(file);
+        }
+
+        function addPlayerInput() {
+            const container = document.getElementById('player-inputs-container');
+            const count = container.children.length;
+            if (count >= 8) { alert('最多支援 8 位玩家！'); return; }
+            const div = document.createElement('div');
+            div.className = 'player-input-group';
+            div.innerHTML = `
+                <span class="color-dot" style="background-color: ${playerColors[count]};"></span>
+                <input type="text" class="player-name-input" placeholder="玩家 ${count + 1} 姓名" value="玩家${count + 1}">
+            `;
+            container.appendChild(div);
+        }
+
+        // ================= 棋盤與遊戲邏輯 =================
+        function renderBoard() {
+            const board = document.getElementById('circular-board');
+            const center = document.querySelector('.board-center');
+            board.innerHTML = '';
+            board.appendChild(center);
+
+            const totalTiles = 24;
+            const radius = 220;
+
+            tilesData.forEach((tile, index) => {
+                const angle = (index * (360 / totalTiles) - 90) * (Math.PI / 180);
+                const x = Math.round(radius * Math.cos(angle));
+                const y = Math.round(radius * Math.sin(angle));
+
+                const tileEl = document.createElement('div');
+                tileEl.className = `tile tile-${tile.type}`; tileEl.id = `tile-${index}`;
+                tileEl.style.transform = `translate(${x}px,${y}px)`;
+                tileEl.innerHTML = `<span class="tile-icon">${tile
